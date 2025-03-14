@@ -255,6 +255,7 @@ docker exec -it mysql_db bash
 mysql -u felipe -p
 USE laravel;
 SHOW TABLES;
+# Verificar que os dados não foram perdidos
 ```
 
 ---
@@ -262,6 +263,64 @@ SHOW TABLES;
 # 6. Criando e rodando um container multi-stage
 Utilize um multi-stage build para otimizar uma aplicação Go, reduzindo o tamanho da imagem final.
 Exemplo de aplicação: Compile e rode a API do Go Fiber Example dentro do container.
+
+```bash
+sudo apt install golang-go
+```
+
+```bash
+mkdir go-fiber
+cd go-fiber
+```
+
+```bash
+go mod init go-fiber
+go get github.com/gofiber/fiber/v2
+```
+
+```bash
+nano main.go
+
+package main
+import "github.com/gofiber/fiber/v2"
+func main() {
+    app := fiber.New()
+
+    app.Get("/", func(c *fiber.Ctx) error {
+        return c.SendString("Olá, Felipe! Sua aplicação Go funcionou!")
+    })
+
+    app.Listen(":3000")
+}
+```
+
+```bash
+nano Dockerfile
+
+FROM golang:1.22-alpine AS builder
+WORKDIR /app
+COPY go.mod go.sum ./
+RUN go mod tidy
+COPY . .
+RUN go build -o app .
+FROM alpine:latest
+RUN apk --no-cache add ca-certificates
+WORKDIR /root/
+COPY --from=builder /app/app .
+EXPOSE 3000
+CMD ["./app"]
+```
+
+```bash
+docker build -t go-fiber .
+docker run -p 3000:3000 go-fiber
+```
+
+Acessar página via http://localhost:3000/.
+
+```bash
+docker images # Verificar se o tamanho da imagem está menor
+```
 
 ---
 
