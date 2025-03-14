@@ -458,11 +458,14 @@ docker-compose up
 
 Acessar via navegador http://localhost:3000/todos. Retornará [], indicando que o banco de dados está vazio.
 
-Acessar o Thunder Client (ou outra ferramenta)
+Acessar o Thunder Client (ou outra ferramenta).
 
 Fazer um POST usando o endpoint http://localhost:3000/todos:
+
 {
+ 
   "tarefa": "Terminar exercício"
+
 }
 
 Acessar via navegador http://localhost:3000/todos. Retornará a tarefa criada.
