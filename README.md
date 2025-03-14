@@ -604,3 +604,25 @@ docker-compose exec db psql -U felipe -d mydb
 # 9. Criando uma imagem personalizada com um servidor web e arquivos estáticos
 Construa uma imagem baseada no Nginx ou Apache, adicionando um site HTML/CSS estático.
 Exemplo de aplicação: Utilize a landing page do Creative Tim para criar uma página moderna hospedada no container.
+
+```bash
+mkdir site-nginx
+cd site-nginx
+```
+
+```bash
+nano Dockerfile 
+
+FROM nginx:alpine
+RUN apk update && apk add git
+RUN rm -rf /usr/share/nginx/html/*
+RUN git clone --single-branch --depth 1 https://github.com/creativetimofficial/material-kit.git /usr/share/nginx/html
+EXPOSE 80
+```
+
+```bash
+docker build -t nginx-material-kit .
+docker run -d -p 8080:80 nginx-material-kit
+```
+
+Acessar a landing page do Creative Tim via navegador http://localhost:8080.
