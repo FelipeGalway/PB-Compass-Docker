@@ -327,6 +327,147 @@ docker images # Verificar se o tamanho da imagem está menor
 # 7. Construindo uma rede Docker para comunicação entre containers
 Crie uma rede Docker personalizada e faça dois containers, um Node.js e um MongoDB, se comunicarem.
 Exemplo de aplicação: Utilize o projeto MEAN Todos para criar um app de tarefas usando Node.js + MongoDB.
+ 
+```bash
+mkdir mean-todos
+cd mean-todos
+```
+
+```bash
+npm init -y
+npm install express mongoose body-parser cors
+```
+
+```bash
+nano server.js
+
+const express = require('express');
+const mongoose = require('mongoose');
+const bodyParser = require('body-parser');
+const cors = require('cors');
+
+const app = express();
+const port = 3000;
+
+app.use(cors());
+app.use(bodyParser.json());
+
+mongoose.connect('mongodb://mongo:27017/todos', {
+  useNewUrlParser: true,
+  useUnifiedTopology: true
+}).then(() => {
+  console.log('Conectado ao MongoDB');
+}).catch((err) => {
+  console.log('Erro ao conectar ao MongoDB:', err);
+});
+
+const Todo = mongoose.model('Todo', {
+  task: String  
+});
+
+app.get('/todos', async (req, res) => {
+  try {
+    const todos = await Todo.find();
+    res.json(todos);
+  } catch (err) {
+    res.status(500).json({ error: 'Erro ao buscar tarefas' });
+  }
+});
+
+app.post('/todos', async (req, res) => {
+  try {
+    const newTodo = new Todo({
+      task: req.body.tarefa    
+    });
+    await newTodo.save();
+    res.status(201).json(newTodo);
+  } catch (err) {
+    res.status(500).json({ error: 'Erro ao criar tarefa' });
+  }
+});
+
+app.delete('/todos/:id', async (req, res) => {
+  try {
+    const todoId = req.params.id;
+    const deletedTodo = await Todo.findByIdAndDelete(todoId);
+    if (deletedTodo) {
+      res.json({ message: 'Tarefa removida com sucesso' });
+    } else {
+      res.status(404).json({ message: 'Tarefa não encontrada' });
+    }
+  } catch (err) {
+    res.status(500).json({ error: 'Erro ao excluir tarefa' });
+  }
+});
+
+app.listen(port, () => {
+  console.log(`Boa, Felipe! Servidor rodando na porta ${port}`);
+});
+```
+
+```bash
+nano Dockerfile
+
+FROM node:16 AS builder
+WORKDIR /app
+COPY package*.json ./
+RUN npm install
+COPY . .
+EXPOSE 3000
+CMD ["node", "server.js"]
+```
+
+```bash
+nano docker-compose.yml
+
+version: '3.8'
+
+services:  
+  nodejs:
+    build:
+      context: .
+    container_name: nodejs-container
+    ports:
+      - "3000:3000"
+    networks:
+      - mean-todos-rede
+    depends_on:
+      - mongo
+
+  mongo:
+    image: mongo:latest
+    container_name: mongo-container
+    volumes:
+      - mongodb_data:/data/db
+    networks:
+      - mean-todos-rede
+
+networks:
+  mean-todos-rede:
+    driver: bridge
+
+volumes:
+  mongodb_data:
+    driver: local
+```
+
+```bash
+docker-compose build
+docker-compose up
+```
+
+Acessar via navegador http://localhost:3000/todos. Retornará [], indicando que o banco de dados está vazio.
+
+Acessar o Thunder Client (ou outra ferramenta)
+
+Fazer um POST usando o endpoint http://localhost:3000/todos:
+{
+  "tarefa": "Terminar exercício"
+}
+
+Acessar via navegador http://localhost:3000/todos. Retornará a tarefa criada.
+
+Faça um GET e um DELETE usando o endpoint http://localhost:3000/todos/:id 
 
 ---
 
