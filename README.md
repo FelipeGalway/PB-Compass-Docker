@@ -470,13 +470,134 @@ Fazer um POST usando o endpoint http://localhost:3000/todos:
 
 Acessar via navegador http://localhost:3000/todos. Retornará a tarefa criada.
 
-Faça um GET e um DELETE usando o endpoint http://localhost:3000/todos/:id 
+Faça um GET e um DELETE usando o endpoint http://localhost:3000/todos/:id. 
 
 ---
 
 # 8. Criando um compose file para rodar uma aplicação com banco de dados
 Utilize Docker Compose para configurar uma aplicação Django com um banco de dados PostgreSQL.
 Exemplo de aplicação: Use o projeto Django Polls App para criar uma pesquisa de opinião integrada ao banco.
+
+```bash
+sudo apt install python3.12-venv
+```
+
+```bash
+python3 -m venv venv
+source venv/bin/activate
+```
+
+```bash
+pip install django
+```
+
+```bash
+django-admin startproject meuprojeto
+cd meuprojeto
+```
+
+```bash
+python manage.py startapp polls
+```
+
+```bash
+nano settings.py
+
+INSTALLED_APPS = [
+    ...
+    'polls',
+]
+```
+
+```bash
+cd ..
+pip install psycopg2-binary
+```
+
+```bash
+nano settings.py
+
+DATABASES = {
+    'default': {
+        'ENGINE': 'django.db.backends.postgresql',
+        'NAME': 'mydb',
+        'USER': 'felipe',
+        'PASSWORD': '123',
+        'HOST': 'db',
+        'PORT': '5432',
+    }
+}
+```
+```bash
+cd meuprojeto
+```
+
+```bash
+nano docker-compose.yml
+
+version: '3.8'
+
+services:
+  db:
+    image: postgres:13
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    environment:
+      POSTGRES_DB: mydb
+      POSTGRES_USER: felipe
+      POSTGRES_PASSWORD: 123
+    networks:
+      - mynetwork
+
+  web:
+    build: .
+    command: python manage.py runserver 0.0.0.0:8000
+    volumes:
+      - .:/app
+    ports:
+      - "8000:8000"
+    depends_on:
+      - db
+    networks:
+      - mynetwork
+
+volumes:
+  postgres_data:
+
+networks:
+  mynetwork:
+```
+
+```bash
+nano Dockerfile
+FROM python:3.9-slim
+WORKDIR /app
+COPY requirements.txt .
+RUN pip install --no-cache-dir -r requirements.txt
+COPY . .
+EXPOSE 8000
+```
+
+```bash
+nano requirements.txt
+Django==3.2
+psycopg2-binary==2.9.3
+```
+```bash
+docker-compose up --build
+```
+
+Abra um novo terminal e navegue até o diretório meuprojeto.
+
+```bash
+docker-compose exec web python manage.py migrate
+```
+
+Acessar a página do Django via navegador http://localhost:8000.
+
+```bash
+docker-compose exec db psql -U felipe -d mydb
+```
 
 ---
 
