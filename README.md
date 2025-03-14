@@ -587,7 +587,7 @@ psycopg2-binary==2.9.3
 docker-compose up --build
 ```
 
-Abra um novo terminal e navegue até o diretório meuprojeto.
+Abra um novo terminal e navegue até o diretório **meuprojeto**.
 
 ```bash
 docker-compose exec web python manage.py migrate
